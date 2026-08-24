@@ -5,6 +5,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // import ElementPlusResolver from 'unplugin-vue-components/resolvers/element-plus'
 
 import { resolve } from 'path'
+// 引入独立抽出的开发环境代理配置
+import proxy from './vite/proxy.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -48,14 +50,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
-    proxy: {
-      // 前端 /api 请求转发到后端 Spring Boot (localhost:8080)
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
+    port: 5173, // 前端开发服务器端口（与后端 8080 区分，避免端口冲突）
+    // 开发代理来自独立文件 vite/proxy.ts，集中维护 /api -> 后端 8080 的转发规则
+    proxy,
   },
 })

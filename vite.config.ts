@@ -40,12 +40,22 @@ export default defineConfig({
       appendTo: 'src/main.ts',
 
       // 4. 生产环境强制关闭（默认true，仅dev启用）
-      disable: process.env.NODE_ENV === 'production'
     }),
     vue(),],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+    },
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      // 前端 /api 请求转发到后端 Spring Boot (localhost:8080)
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 })

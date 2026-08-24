@@ -1,10 +1,5 @@
 import { defineStore } from 'pinia'
 
-interface UserInfo {
-    name: string
-    age: number
-}
-
 // 定义用户模块的store
 export const useUserStore = defineStore('user', {   
     state: () => ({

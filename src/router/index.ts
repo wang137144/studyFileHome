@@ -1,19 +1,26 @@
 // ===== 前端路由配置（Vue Router）=====
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useRbacStore } from '@/stores/rbac'
+import { useTabsStore } from '@/stores/tabs'
 
-// 扩展 RouteMeta 类型，声明我们自定义的预请求标记
+// 扩展 RouteMeta 类型，声明我们自定义的字段
 declare module 'vue-router' {
   interface RouteMeta {
-    prefetch?: 'users' | 'roles'
+    title?: string // 标签页 / 标题显示文字
+    prefetch?: 'users' | 'roles' // 进入页面前的预请求标记
   }
 }
 
 // 路由组件改为动态 import —— 实现按需加载（代码分包），
 // Vite 会在父页面加载后自动插入 prefetch，达到“预加载”效果。
 const routes: RouteRecordRaw[] = [
-  // 访问根路径时默认重定向到用户管理页，避免空白页
-  { path: '/', redirect: '/user' },
+  // 根路径直接展示首页（欢迎页），不再重定向到用户管理
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('../views/Home.vue'),
+    meta: { title: '首页' },
+  },
   {
     path: '/user',
     name: 'user',
@@ -25,6 +32,13 @@ const routes: RouteRecordRaw[] = [
     name: 'role',
     component: () => import('../views/RoleManage.vue'),
     meta: { title: '角色管理', prefetch: 'roles' },
+  },
+  // 兜底：任何未匹配的路由都展示 404 页面
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFound.vue'),
+    meta: { title: '404' },
   },
 ]
 
@@ -40,6 +54,11 @@ router.beforeEach(async (to) => {
   if (to.meta.prefetch === 'users') await rbac.fetchUsers()
   if (to.meta.prefetch === 'roles') await rbac.fetchRoles()
   return true
+})
+
+// 路由切换完成后，把访问过的页面记录到顶部标签栏（首页除外）
+router.afterEach((to) => {
+  useTabsStore().addTab(to)
 })
 
 export default router

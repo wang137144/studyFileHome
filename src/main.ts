@@ -21,5 +21,4 @@ const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
 // 3. 创建 Vue 应用：挂载 Pinia → 挂载 Element Plus → 渲染到 index.html 的 #app 节点
-// 3. 创建 Vue 应用：挂载 Pinia → 挂载 Element Plus → 挂载 Router → 渲染到 #app
 createApp(App).use(pinia).use(ElementPlus).use(router).mount('#app')

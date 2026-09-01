@@ -74,6 +74,12 @@ function closeTab(tab: TabItem) {
   if (nav) router.push(nav);
 }
 
+// 固定“首页”标签：始终展示且不可关闭
+const isHomeActive = computed(() => route.path === "/")
+function gotoHome() {
+  if (route.path !== "/") router.push("/")
+}
+
 // 刷新当前标签：递增当前路由的 refreshKey，触发 keep-alive 重新渲染组件
 function refreshCurrent() {
   tabsStore.refreshTab(route.path);
@@ -181,27 +187,23 @@ function runCtx(action: "current" | "others" | "left" | "right" | "all") {
         </div>
       </header>
 
-      <!-- 顶部标签栏：圆角胶囊样式；右键标签弹出操作菜单 -->
+      <!-- 顶部标签栏：圆角胶囊样式；最左侧固定“首页”标签且不可关闭 -->
       <div class="tab-bar">
-        <div
-          v-for="tab in tabsStore.tabs"
-          :key="tab.path"
-          class="tab-item"
-          :class="{ active: tab.path === tabsStore.activePath }"
-          @click="gotoTab(tab)"
-          @contextmenu.prevent="openContextMenu($event, tab.path)"
-        >
-          <el-icon class="tab-icon"
-            ><component :is="tabIcon(tab.path)"
-          /></el-icon>
-          <span class="tab-title">{{ tab.title }}</span>
-          <span class="tab-close" title="关闭" @click.stop="closeTab(tab)"
-            >×</span
-          >
+        <!-- 固定首页标签（始终展示，不可关闭） -->
+        <div class="tab-item home-tab" :class="{ active: isHomeActive }" @click="gotoHome">
+          <el-icon class="tab-icon"><HomeFilled /></el-icon>
+          <span class="tab-title">首页</span>
         </div>
-        <span v-if="tabsStore.tabs.length === 0" class="tab-empty"
-          >暂无打开的页面</span
-        >
+
+        <!-- 动态打开的页面标签：支持切换 / 关闭 / 右键菜单 -->
+        <template v-for="tab in tabsStore.tabs" :key="tab.path">
+          <div class="tab-item" :class="{ active: tab.path === tabsStore.activePath }" @click="gotoTab(tab)" @contextmenu.prevent="openContextMenu($event, tab.path)">
+            <el-icon class="tab-icon"><component :is="tabIcon(tab.path)" /></el-icon>
+            <span class="tab-title">{{ tab.title }}</span>
+            <span class="tab-close" title="关闭" @click.stop="closeTab(tab)">×</span>
+          </div>
+        </template>
+        <span v-if="tabsStore.tabs.length === 0" class="tab-empty">暂无其他打开的页面</span>
       </div>
 
       <!-- 主内容区：keep-alive 缓存已打开的页面，刷新按钮通过 activeKey 强制重渲染 -->

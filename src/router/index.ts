@@ -8,6 +8,8 @@ declare module 'vue-router' {
   interface RouteMeta {
     title?: string // 标签页 / 标题显示文字
     prefetch?: 'users' | 'roles' // 进入页面前的预请求标记
+    keepAlive?: boolean // 是否在 App 的 keep-alive 中常驻缓存（受路由统一控制）
+    cacheName?: string // 缓存命中的组件名（与 .vue 文件名一致，由 SFC 自动推断）
   }
 }
 
@@ -18,27 +20,27 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/Home.vue'),
-    meta: { title: '首页' },
+    component: () => import('../views/home/Home.vue'),
+    meta: { title: '首页', keepAlive: true, cacheName: 'Home' },
   },
   {
     path: '/user',
     name: 'user',
-    component: () => import('../views/UserList.vue'),
-    meta: { title: '用户管理', prefetch: 'users' },
+    component: () => import('../views/user/UserList.vue'),
+    meta: { title: '用户管理', prefetch: 'users', keepAlive: true, cacheName: 'UserList' },
   },
   {
     path: '/role',
     name: 'role',
-    component: () => import('../views/RoleManage.vue'),
-    meta: { title: '角色管理', prefetch: 'roles' },
+    component: () => import('../views/role/RoleManage.vue'),
+    meta: { title: '角色管理', prefetch: 'roles', keepAlive: true, cacheName: 'RoleManage' },
   },
   // 兜底：任何未匹配的路由都展示 404 页面
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('../views/NotFound.vue'),
-    meta: { title: '404' },
+    meta: { title: '404', keepAlive: true, cacheName: 'NotFound' },
   },
 ]
 

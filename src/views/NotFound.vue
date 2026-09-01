@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // ===== 404 页面：路由未匹配时展示 =====
-defineOptions({ name: 'NotFound' })
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

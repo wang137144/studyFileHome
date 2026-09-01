@@ -1,7 +1,5 @@
 <script setup lang="ts">
 // ===== 首页：云南省经济 / 金融 / 旅游 发展态势可视化（模拟数据）=====
-defineOptions({ name: 'Home' })
-
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
 import { TrendCharts, Money, User, ShoppingCart } from '@element-plus/icons-vue'
@@ -19,7 +17,7 @@ import {
   tourismRevenue,
   tourismGdpRatio,
   kpis,
-} from './homeData'
+} from './common/homeData'
 
 // Element Plus 图标映射（与 homeData 中 icon 字符串对应）
 const iconMap: Record<string, unknown> = { TrendCharts, Money, User, ShoppingCart }

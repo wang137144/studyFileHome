@@ -1,8 +1,5 @@
 <script setup lang="ts">
 // ===== 页面：角色管理（角色增删改查）=====
-// 组件名用于 keep-alive 缓存匹配
-defineOptions({ name: 'RoleManage' })
-
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -10,6 +7,7 @@ import { Plus, Search, RefreshRight, Edit, Delete } from '@element-plus/icons-vu
 import { saveRole, updateRole, deleteRole } from '@/api/role'
 import { useRbacStore } from '@/stores/rbac'
 import type { Role } from '@/api/types'
+import { searchConfig, tableColumns, dialogFields, type RoleForm } from './common/config'
 
 // 角色列表直接使用 RBAC store 缓存
 const rbac = useRbacStore()
@@ -29,10 +27,10 @@ const filteredRoles = computed(() => {
   )
 })
 
-// 新增/编辑弹窗
+// 弹窗表单（类型由 common/config.ts 的 RoleForm 统一约束）
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref<Partial<Role>>({ roleName: '', roleCode: '', description: '' })
+const form = ref<RoleForm>({ roleName: '', roleCode: '', description: '' })
 
 // 确保角色列表就绪（命中缓存则不发请求）
 async function loadRoles() {
@@ -47,7 +45,11 @@ function openAdd() {
 
 function openEdit(row: Role) {
   isEdit.value = true
-  form.value = { ...row }
+  form.value = {
+    roleName: row.roleName || '',
+    roleCode: row.roleCode || '',
+    description: row.description || '',
+  }
   dialogVisible.value = true
 }
 
@@ -101,7 +103,7 @@ onMounted(loadRoles)
         <el-form-item label="关键词">
           <el-input
             v-model="keyword"
-            placeholder="角色名称 / 编码"
+            :placeholder="searchConfig.keywordPlaceholder"
             clearable
             :prefix-icon="Search"
             style="width: 260px"
@@ -136,13 +138,18 @@ onMounted(loadRoles)
         style="width: 100%"
         empty-text="暂无数据"
       >
-        <el-table-column prop="id" label="ID" width="60" align="center" />
-        <el-table-column prop="roleName" label="角色名称" min-width="140" />
-        <el-table-column prop="roleCode" label="角色编码" min-width="120" />
-        <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" min-width="160" />
-        <el-table-column label="操作" min-width="150" align="center">
-          <template #default="{ row }">
+        <!-- 列配置驱动渲染；slot 列走自定义模板 -->
+        <el-table-column
+          v-for="col in tableColumns"
+          :key="col.prop || col.label"
+          :prop="col.prop"
+          :label="col.label"
+          :width="col.width"
+          :min-width="col.minWidth"
+          :align="col.align"
+          :show-overflow-tooltip="col.showOverflowTooltip"
+        >
+          <template v-if="col.slot === 'operation'" #default="{ row }">
             <el-button link type="primary" size="small" :icon="Edit" @click="openEdit(row)">
               编辑
             </el-button>
@@ -154,17 +161,29 @@ onMounted(loadRoles)
       </el-table>
     </el-card>
 
-    <!-- 新增/编辑角色弹窗 -->
+    <!-- 新增/编辑角色弹窗：字段由配置驱动 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑角色' : '新增角色'" width="440px">
       <el-form :model="form" label-width="80px">
-        <el-form-item label="角色名称">
-          <el-input v-model="form.roleName" placeholder="如：管理员" />
-        </el-form-item>
-        <el-form-item label="角色编码">
-          <el-input v-model="form.roleCode" placeholder="如：ADMIN（唯一）" :disabled="isEdit" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" />
+        <el-form-item
+          v-for="f in dialogFields"
+          :key="f.prop"
+          :label="f.label"
+          :prop="f.prop"
+        >
+          <el-input
+            v-if="f.type === 'input'"
+            v-model="form[f.prop]"
+            :placeholder="f.placeholder"
+            :disabled="isEdit && f.disabledWhenEdit"
+          />
+          <el-input
+            v-else
+            v-model="form[f.prop]"
+            type="textarea"
+            :rows="3"
+            :placeholder="f.placeholder"
+            :disabled="isEdit && f.disabledWhenEdit"
+          />
         </el-form-item>
       </el-form>
       <template #footer>

@@ -1,8 +1,5 @@
 <script setup lang="ts">
 // ===== 页面：用户列表（展示全部用户 + 分配角色）=====
-// 组件名用于 keep-alive 缓存匹配
-defineOptions({ name: 'UserList' })
-
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -10,6 +7,7 @@ import { User, Search, RefreshRight } from '@element-plus/icons-vue'
 import { assignRoles } from '@/api/user'
 import { useRbacStore } from '@/stores/rbac'
 import type { UserVO } from '@/api/types'
+import { searchConfig, tableColumns, assignDialogConfig } from './common/config'
 
 // 直接使用 RBAC store 中的缓存（用户列表 / 角色列表），避免重复请求
 const rbac = useRbacStore()
@@ -86,14 +84,14 @@ onMounted(loadUsers)
         <el-form-item label="关键词">
           <el-input
             v-model="keyword"
-            placeholder="姓名 / 电话"
+            :placeholder="searchConfig.keywordPlaceholder"
             clearable
             :prefix-icon="Search"
             style="width: 220px"
           />
         </el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="selectedRoleId" placeholder="请选择角色" clearable style="width: 180px">
+          <el-select v-model="selectedRoleId" :placeholder="searchConfig.rolePlaceholder" clearable style="width: 180px">
             <el-option
               v-for="r in roles"
               :key="r.id"
@@ -138,14 +136,17 @@ onMounted(loadUsers)
         style="width: 100%"
         empty-text="暂无数据"
       >
-        <el-table-column prop="id" label="ID" width="60" align="center" />
-        <el-table-column prop="name" label="姓名" min-width="110" />
-        <el-table-column prop="title" label="职位" min-width="110" />
-        <el-table-column prop="phone" label="电话" min-width="130" />
-        <el-table-column prop="education" label="学历" min-width="90" />
-        <el-table-column prop="college" label="学院" min-width="150" />
-        <el-table-column label="角色" min-width="160">
-          <template #default="{ row }">
+        <!-- 列配置驱动渲染；slot 列走自定义模板 -->
+        <el-table-column
+          v-for="col in tableColumns"
+          :key="col.prop || col.label"
+          :prop="col.prop"
+          :label="col.label"
+          :width="col.width"
+          :min-width="col.minWidth"
+          :align="col.align"
+        >
+          <template v-if="col.slot === 'roles'" #default="{ row }">
             <el-tag
               v-for="r in (row.roles || [])"
               :key="r.id"
@@ -158,9 +159,7 @@ onMounted(loadUsers)
             </el-tag>
             <span v-if="!row.roles || row.roles.length === 0" style="color: #999">未分配</span>
           </template>
-        </el-table-column>
-        <el-table-column label="操作" min-width="110" align="center">
-          <template #default="{ row }">
+          <template v-else-if="col.slot === 'operation'" #default="{ row }">
             <el-button link type="primary" size="small" @click="openAssign(row)">分配角色</el-button>
           </template>
         </el-table-column>
@@ -168,7 +167,7 @@ onMounted(loadUsers)
     </el-card>
 
     <!-- 分配角色弹窗 -->
-    <el-dialog v-model="dialogVisible" title="分配角色" width="420px">
+    <el-dialog v-model="dialogVisible" :title="assignDialogConfig.title" :width="assignDialogConfig.width">
       <div v-if="currentUser" style="margin-bottom: 8px">
         当前用户：{{ currentUser.name }}（ID: {{ currentUser.id }}）
       </div>

@@ -28,7 +28,11 @@ export const useTabsStore = defineStore('tabs', () => {
       return
     }
     const title = (route.meta?.title as string) || path
-    const name = typeof route.name === 'string' ? route.name : path
+    // 缓存命中依赖组件名（与 .vue 文件名一致），优先取路由 meta.cacheName，
+    // 回退到路由名 / 路径，保证 keep-alive include 能正确匹配
+    const name =
+      (typeof route.meta?.cacheName === 'string' && route.meta.cacheName) ||
+      (typeof route.name === 'string' ? route.name : path)
     if (!tabs.value.some((t) => t.path === path)) {
       tabs.value.push({ path, name, title })
     }

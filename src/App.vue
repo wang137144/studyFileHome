@@ -33,8 +33,8 @@ function toggleMenu() {
 function prefetch(page: "user" | "role") {
   const loader =
     page === "user"
-      ? () => import("./views/UserList.vue")
-      : () => import("./views/RoleManage.vue");
+      ? () => import("./views/user/UserList.vue")
+      : () => import("./views/role/RoleManage.vue");
   loader().catch(() => {});
 }
 
@@ -50,12 +50,17 @@ function tabIcon(path: string) {
 }
 
 // ===== 页面缓存（keep-alive）配置 =====
-// 已打开的标签页 + 首页 + 404 统一缓存；关闭标签后对应组件名会从 include 移除，下次打开重新创建
-const cachedNames = computed(() => [
-  "Home",
-  ...tabsStore.tabs.map((t) => t.name),
-  "NotFound",
-]);
+// 缓存名单由「路由 meta.keepAlive」统一控制（meta.cacheName 即组件名），
+// 不再在各组件里写 defineOptions；动态打开的标签从 tabsStore 取组件名追加。
+const cachedNames = computed(() => {
+  const base = router
+    .getRoutes()
+    .filter((r) => r.meta?.keepAlive)
+    .map((r) => r.meta?.cacheName as string)
+    .filter(Boolean)
+  const dynamic = tabsStore.tabs.map((t) => t.name)
+  return [...new Set([...base, ...dynamic])]
+});
 // 当前路由 key = 路径 + 刷新键；刷新按钮会递增 refreshKeys[route.path]，强制当前标签组件重新挂载
 const activeKey = computed(
   () => `${route.path}-${tabsStore.refreshKeys[route.path] || 0}`,

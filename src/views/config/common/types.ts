@@ -18,6 +18,7 @@ export interface OptionItem {
 /** 筛选控件类型（决定筛选区渲染哪种 Element Plus 组件） */
 export type FilterType =
   | 'input' // 文本模糊匹配
+  | 'text' // 文本模糊匹配（与 input 等价，强调「文本框 + 模糊查询」，可在配置页切换）
   | 'select' // 下拉精确匹配
   | 'date' // 单日期
   | 'daterange' // 日期区间
@@ -173,3 +174,15 @@ export interface PageConfig {
 
 /** 筛选值的类型（覆盖所有控件可能的值形态） */
 export type FilterValue = string | number | boolean | null | Array<string | number | null>
+
+/**
+ * 字段配置覆盖：配置管理页面（/config-manage）保存后写入 localStorage 的内容。
+ * 保存的是「当前全部字段的完整配置」（含新增 / 删除后的结果），与默认配置合并时整体替换，
+ * 因此既能改字段类型，也能增删字段，最终驱动商品管理页面。
+ */
+export interface ConfigOverride {
+  /** 列配置完整列表（整体替换默认 columns） */
+  columns?: ColumnConfig[]
+  /** 表单字段配置完整列表（整体替换默认 formFields） */
+  formFields?: FormFieldConfig[]
+}

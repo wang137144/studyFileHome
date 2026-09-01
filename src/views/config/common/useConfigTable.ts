@@ -1,6 +1,10 @@
 // ===== 配置化页面的核心逻辑（composable）=====
 // 职责：根据一份 PageConfig，完成「本地缓存读写 + 条件筛选 + 分页 + 增删改查」。
 // 页面组件只消费这里暴露的状态与方法，不关心数据存在哪、怎么筛。
+//
+// 重要：所有逻辑都基于传入的 configRef（响应式 ref）读取，而不是解引用后的快照。
+// 这样「配置页面」保存后整体替换 configRef.value 时，这里的 computed 会自动重算，
+// 商品管理页面的列、筛选、表单会立即跟随新配置重新渲染。
 import { computed, ref, watch, type Ref } from 'vue'
 import type { ColumnConfig, FilterType, FilterValue, PageConfig, RowData } from './types'
 import { ensureSeed, formatDateTime, writeList } from './storage'
@@ -36,6 +40,11 @@ function matchCell(row: RowData, col: ColumnConfig, value: unknown): boolean {
     case 'select':
       if (value === '' || value === null || value === undefined) return true
       return toText(row[col.prop]) === toText(value)
+    case 'text':
+    case 'input':
+      // 文本类型：模糊匹配（包含即命中）
+      if (value === '' || value === null || value === undefined) return true
+      return toText(row[col.prop]).includes(toText(value))
     case 'date':
       if (!value) return true
       return toDay(row[col.prop]) === toDay(value)
@@ -61,10 +70,8 @@ function matchCell(row: RowData, col: ColumnConfig, value: unknown): boolean {
       if (max !== null && max !== undefined && max !== '' && num > Number(max)) return false
       return true
     }
-    default: {
-      if (value === '' || value === null || value === undefined) return true
-      return toText(row[col.prop]).includes(toText(value))
-    }
+    default:
+      return true
   }
 }
 
@@ -77,34 +84,34 @@ function defaultFilterValue(col: ColumnConfig): FilterValue {
 
 /**
  * 配置化列表的核心逻辑
- * @param configRef 页面配置（ref 包裹，改动配置里的 show 开关页面会立即响应）
+ * @param configRef 页面配置（ref 包裹，整体替换 configRef.value 后页面会立即响应）
  */
 export function useConfigTable(configRef: Ref<PageConfig>) {
-  const config = configRef.value
-
   /** 原始数据（已与 localStorage 同步） */
   const list = ref<RowData[]>([])
   /** 各列的筛选值：{ 字段名: 值 } */
   const filters = ref<Record<string, FilterValue>>({})
   const currentPage = ref(1)
-  const pageSize = ref(config.pagination.defaultPageSize)
+  const pageSize = ref(configRef.value.pagination.defaultPageSize)
 
   // ===== 列的动态控制 =====
   /** 配置中 show 为 true 的列 —— 表格里真正渲染的列 */
-  const visibleColumns = computed(() => config.columns.filter((col) => col.show))
+  const visibleColumns = computed(() => configRef.value.columns.filter((col) => col.show))
   /** 可见列里 filterable 不为 false 的列 —— 筛选区里渲染的条件（存在的列即可筛选） */
   const filterColumns = computed(() =>
     visibleColumns.value.filter((col) => col.filterable !== false)
   )
   /** 显示出来的行内操作按钮 */
-  const visibleRowActions = computed(() => config.rowActions.filter((a) => a.show))
+  const visibleRowActions = computed(() => configRef.value.rowActions.filter((a) => a.show))
   /** 显示出来的表格右上角按钮 */
-  const visibleHeaderActions = computed(() => (config.headerActions ?? []).filter((a) => a.show))
+  const visibleHeaderActions = computed(() =>
+    (configRef.value.headerActions ?? []).filter((a) => a.show)
+  )
 
   /** 初始化筛选值（每个列都留一个 key，列显隐切换时不会丢已填的值） */
   function initFilters(): void {
     const next: Record<string, FilterValue> = {}
-    for (const col of config.columns) {
+    for (const col of configRef.value.columns) {
       next[col.prop] = filters.value[col.prop] ?? defaultFilterValue(col)
     }
     filters.value = next
@@ -112,18 +119,18 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
 
   /** 从缓存 / 种子数据载入列表 */
   function loadList(): void {
-    list.value = ensureSeed(config.storageKey, config.seed)
+    list.value = ensureSeed(configRef.value.storageKey, configRef.value.seed)
     initFilters()
   }
 
   /** 写回 localStorage */
   function persist(): void {
-    writeList(config.storageKey, list.value)
+    writeList(configRef.value.storageKey, list.value)
   }
 
   /** 生成下一个主键（当前最大 id + 1） */
   function nextId(): number {
-    const field = config.idField
+    const field = configRef.value.idField
     return list.value.reduce((max, row) => Math.max(max, Number(row[field]) || 0), 0) + 1
   }
 
@@ -136,7 +143,7 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
   const total = computed(() => filteredList.value.length)
   /** 当前页要展示的数据 */
   const pagedList = computed(() => {
-    if (!config.pagination.show) return filteredList.value
+    if (!configRef.value.pagination.show) return filteredList.value
     const start = (currentPage.value - 1) * pageSize.value
     return filteredList.value.slice(start, start + pageSize.value)
   })
@@ -151,7 +158,7 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
   /** 新增：自动补主键与创建时间 */
   function addRow(data: RowData): RowData {
     const row: RowData = { ...data }
-    row[config.idField] = nextId()
+    row[configRef.value.idField] = nextId()
     if (!row.createTime) row.createTime = formatDateTime(new Date())
     list.value = [row, ...list.value]
     persist()
@@ -160,7 +167,7 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
 
   /** 修改：按主键整体合并 */
   function updateRow(data: RowData): boolean {
-    const index = list.value.findIndex((row) => row[config.idField] === data[config.idField])
+    const index = list.value.findIndex((row) => row[configRef.value.idField] === data[configRef.value.idField])
     if (index < 0) return false
     list.value[index] = { ...list.value[index], ...data }
     persist()
@@ -169,13 +176,13 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
 
   /** 修改单个字段（快捷修改 / 表格内开关） */
   function updateField(row: RowData, prop: string, value: unknown): boolean {
-    return updateRow({ [config.idField]: row[config.idField], [prop]: value })
+    return updateRow({ [configRef.value.idField]: row[configRef.value.idField], [prop]: value })
   }
 
   /** 删除：按主键移除 */
   function removeRow(row: RowData): boolean {
-    const target = row[config.idField]
-    const next = list.value.filter((item) => item[config.idField] !== target)
+    const target = row[configRef.value.idField]
+    const next = list.value.filter((item) => item[configRef.value.idField] !== target)
     if (next.length === list.value.length) return false
     list.value = next
     persist()
@@ -184,8 +191,8 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
 
   /** 恢复初始假数据（清缓存后重新写种子数据） */
   function resetData(): void {
-    writeList(config.storageKey, config.seed)
-    list.value = config.seed.map((row) => ({ ...row }))
+    writeList(configRef.value.storageKey, configRef.value.seed)
+    list.value = configRef.value.seed.map((row) => ({ ...row }))
     resetFilters()
   }
 
@@ -196,15 +203,13 @@ export function useConfigTable(configRef: Ref<PageConfig>) {
   }
   /** 重置：清空所有筛选值 */
   function resetFilters(): void {
-    for (const col of config.columns) {
+    for (const col of configRef.value.columns) {
       filters.value[col.prop] = defaultFilterValue(col)
     }
     currentPage.value = 1
   }
 
   return {
-    // 配置
-    config,
     // 列
     visibleColumns,
     filterColumns,

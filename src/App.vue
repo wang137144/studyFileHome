@@ -31,11 +31,12 @@ function toggleMenu() {
 }
 
 // 菜单 hover 时预热对应页面组件（预加载）：提前 import，切换时无需等待网络分包
-function prefetch(page: "user" | "role" | "config") {
+function prefetch(page: "user" | "role" | "goods" | "configManage") {
   const loaders = {
     user: () => import("./views/user/UserList.vue"),
     role: () => import("./views/role/RoleManage.vue"),
-    config: () => import("./views/config/ConfigPage.vue"),
+    goods: () => import("./views/config/GoodsManage.vue"),
+    configManage: () => import("./views/config/ConfigEditor.vue"),
   } as const;
   loaders[page]().catch(() => {});
 }
@@ -48,6 +49,7 @@ function tabIcon(path: string) {
   if (path === "/user") return User;
   if (path === "/role") return Setting;
   if (path === "/config") return Tickets;
+  if (path === "/config-manage") return Setting;
   if (path === "/") return HomeFilled;
   return Document;
 }
@@ -158,9 +160,13 @@ function runCtx(action: "current" | "others" | "left" | "right" | "all") {
           <el-icon><Setting /></el-icon>
           <span>角色管理</span>
         </el-menu-item>
-        <el-menu-item index="/config" @mouseenter="prefetch('config')">
+        <el-menu-item index="/config" @mouseenter="prefetch('goods')">
           <el-icon><Tickets /></el-icon>
-          <span>配置页面</span>
+          <span>商品管理</span>
+        </el-menu-item>
+        <el-menu-item index="/config-manage" @mouseenter="prefetch('configManage')">
+          <el-icon><Setting /></el-icon>
+          <span>配置管理</span>
         </el-menu-item>
       </el-menu>
     </aside>

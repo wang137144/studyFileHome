@@ -1,6 +1,6 @@
 // ===== 浏览器本地缓存（localStorage）读写封装 =====
 // 纯前端增删改查：所有数据存在 localStorage，刷新页面不丢失。
-import type { RowData } from './types'
+import type { ConfigOverride, RowData } from './types'
 
 /** 读取缓存的列表；解析失败或没数据时返回空数组 */
 export function readList(storageKey: string): RowData[] {
@@ -47,4 +47,31 @@ export function formatDateTime(date: Date): string {
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
     `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
   )
+}
+
+// ===== 字段配置覆盖（由「配置管理」页面写入，商品管理页面读取合并）=====
+/** 读取配置覆盖；解析失败或没数据返回 null */
+export function loadConfigOverride(storageKey: string): ConfigOverride | null {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? (parsed as ConfigOverride) : null
+  } catch {
+    return null
+  }
+}
+
+/** 保存配置覆盖 */
+export function saveConfigOverride(storageKey: string, override: ConfigOverride): void {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(override))
+  } catch {
+    // 超出配额等场景下静默失败，不阻塞交互
+  }
+}
+
+/** 清空配置覆盖（恢复为默认字段配置） */
+export function clearConfigOverride(storageKey: string): void {
+  localStorage.removeItem(storageKey)
 }

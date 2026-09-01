@@ -111,9 +111,9 @@ function placeholderOf(col: ColumnConfig): string {
     <el-form :inline="true" class="filter-form" @submit.prevent>
       <!-- ① 动态筛选条件：一列一个条件，控件类型由配置推导 -->
       <el-form-item v-for="col in shownColumns" :key="col.prop" :label="col.label">
-        <!-- 文本模糊匹配 -->
+        <!-- 文本模糊匹配（input / text 等价，都渲染文本框 + 模糊查询） -->
         <el-input
-          v-if="resolveFilterType(col) === 'input'"
+          v-if="resolveFilterType(col) === 'input' || resolveFilterType(col) === 'text'"
           :model-value="textValue(col.prop)"
           :placeholder="placeholderOf(col)"
           clearable

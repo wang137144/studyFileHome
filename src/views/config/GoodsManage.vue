@@ -1,26 +1,32 @@
 <script setup lang="ts">
-// ===== 页面：配置化页面（纯前端配置驱动 + localStorage 增删改查）=====
-// 这个页面本身不含任何业务字段，全部结构来自下面这一份配置对象：
+// ===== 页面：商品管理（纯前端配置驱动 + localStorage 增删改查）=====
+// 这个页面本身不含任何业务字段，全部结构来自下面这份配置对象：
 //   筛选条件 / 列 / 按钮显隐 / 分页 / 表单 —— 改配置即改页面。
-// 想换成别的业务，只需复制 common/bookConfig.ts 改字段，再把下面的 import 换掉即可。
-import { computed, onMounted, ref } from 'vue'
+// 想换成别的业务，只需复制 common/goodsConfig.ts 改字段，再把下面的 import 换掉即可。
+//
+// 「配置管理」页面（/config-manage）会动态修改商品字段的类型（如下拉 / 文本框 / 数字…），
+// 这里在挂载与每次从缓存激活时，都会重新合并「默认配置 + 字段配置覆盖」，使改动即时生效。
+import { computed, onActivated, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
 import ConfigFilterBar from './components/ConfigFilterBar.vue'
 import ConfigDataTable from './components/ConfigDataTable.vue'
 import ConfigFormDialog from './components/ConfigFormDialog.vue'
 import ConfigQuickEditDialog from './components/ConfigQuickEditDialog.vue'
 import ConfigDetailDialog from './components/ConfigDetailDialog.vue'
 import { useConfigTable } from './common/useConfigTable'
-import { bookPageConfig } from './common/bookConfig'
+import { mergeConfig } from './common/mergeConfig'
+import { loadConfigOverride } from './common/storage'
+import { goodsPageConfig, goodsConfigOverrideKey } from './common/goodsConfig'
 import type { ActionConfig, PageConfig, QuickEditConfig, RowData } from './common/types'
 
 // ===== 这里换一份配置，就变成另一个业务页面 =====
-const pageConfig = ref<PageConfig>(bookPageConfig)
+// 优先合并「配置管理」页面保存的覆盖，使类型调整能动态生效
+const pageConfig = ref<PageConfig>(
+  mergeConfig(goodsPageConfig, loadConfigOverride(goodsConfigOverrideKey))
+)
 
 // 配置化列表的全部能力（缓存读写 / 筛选 / 分页 / 增删改查）都来自这个 composable
 const {
-  config,
   visibleColumns,
   filterColumns,
   visibleRowActions,
@@ -40,9 +46,9 @@ const {
   resetFilters,
 } = useConfigTable(pageConfig)
 
-/** 业务名称：书本管理 → 书本（用于弹窗标题） */
-const entityName = computed(() => config.title.replace(/管理$/, ''))
-/** 行标识字段：取第一个显示的列（书名），用于确认框与弹窗标题 */
+/** 业务名称：商品管理 → 商品（用于弹窗标题） */
+const entityName = computed(() => pageConfig.value.title.replace(/管理$/, ''))
+/** 行标识字段：取第一个显示的列（商品名称），用于确认框与弹窗标题 */
 const labelField = computed(() => visibleColumns.value[0]?.prop)
 
 // ===== 新增 / 编辑弹窗 =====
@@ -173,26 +179,24 @@ function onSearch(): void {
   ElMessage.success(`共筛选出 ${total.value} 条数据`)
 }
 
-onMounted(loadList)
+/** 重新合并「配置管理」覆盖，使配置页的改动在当前页面生效 */
+function reloadConfig(): void {
+  pageConfig.value = mergeConfig(goodsPageConfig, loadConfigOverride(goodsConfigOverrideKey))
+  loadList()
+}
+
+onMounted(reloadConfig)
+// 从「配置管理」页面切回来时（keep-alive 激活）重新加载覆盖配置
+onActivated(reloadConfig)
 </script>
 
 <template>
   <div class="page">
-    <!-- 配置说明：告诉使用者这一页的结构从哪来 -->
-    <el-alert type="info" :closable="false" show-icon class="tip">
-      <template #icon><el-icon><InfoFilled /></el-icon></template>
-      <template #title>
-        本页所有筛选条件、列、按钮、分页均由
-        <b>src/views/config/common/bookConfig.ts</b>
-        渲染；数据存于浏览器 localStorage（键名 <b>{{ config.storageKey }}</b>），增删改查全部纯前端完成。
-      </template>
-    </el-alert>
-
     <!-- ① 筛选条件 + 查询 / 重置 / 新增（新增固定在筛选条件之后） -->
     <ConfigFilterBar
       :columns="filterColumns"
       :filters="filters"
-      :toolbar="config.toolbar"
+      :toolbar="pageConfig.toolbar"
       @search="onSearch"
       @reset="onReset"
       @add="openAdd"
@@ -202,15 +206,15 @@ onMounted(loadList)
     <ConfigDataTable
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      :title="config.title"
-      :desc="config.desc"
+      :title="pageConfig.title"
+      :desc="pageConfig.desc"
       :columns="visibleColumns"
       :data="pagedList"
       :row-actions="visibleRowActions"
       :header-actions="visibleHeaderActions"
-      :show-index="config.showIndex"
+      :show-index="pageConfig.showIndex"
       :total="total"
-      :pagination="config.pagination"
+      :pagination="pageConfig.pagination"
       @action="onRowAction"
       @header-action="onHeaderAction"
       @field-change="onFieldChange"
@@ -219,12 +223,12 @@ onMounted(loadList)
     <!-- ③ 新增 / 编辑弹窗 -->
     <ConfigFormDialog
       v-model:visible="formVisible"
-      :fields="config.formFields"
+      :fields="pageConfig.formFields"
       :mode="formMode"
       :row="currentRow"
       :entity-name="entityName"
-      :width="config.dialog.width"
-      :label-width="config.dialog.labelWidth"
+      :width="pageConfig.dialog.width"
+      :label-width="pageConfig.dialog.labelWidth"
       @submit="onFormSubmit"
     />
 
@@ -240,10 +244,10 @@ onMounted(loadList)
     <!-- ⑤ 查看详情弹窗（含表格中隐藏的列） -->
     <ConfigDetailDialog
       v-model:visible="detailVisible"
-      :columns="config.columns"
+      :columns="pageConfig.columns"
       :row="detailRow"
       :entity-name="entityName"
-      :width="config.dialog.width"
+      :width="pageConfig.dialog.width"
     />
   </div>
 </template>
@@ -253,13 +257,5 @@ onMounted(loadList)
   min-height: 100%;
   padding: 12px;
   background: #f0f5ff;
-}
-.tip {
-  margin-bottom: 12px;
-  border-radius: 10px;
-}
-.tip :deep(.el-alert__title) {
-  font-size: 13px;
-  line-height: 1.7;
 }
 </style>

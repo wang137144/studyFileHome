@@ -36,11 +36,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '角色管理', prefetch: 'roles', keepAlive: true, cacheName: 'RoleManage' },
   },
   {
-    // 配置页面：整页结构由一份 JS 配置渲染，数据存浏览器 localStorage（纯前端增删改查）
+    // 商品管理：整页结构由一份 JS 配置渲染，数据存浏览器 localStorage（纯前端增删改查）
     path: '/config',
-    name: 'config',
-    component: () => import('../views/config/ConfigPage.vue'),
-    meta: { title: '配置页面', keepAlive: true, cacheName: 'ConfigPage' },
+    name: 'goods',
+    component: () => import('../views/config/GoodsManage.vue'),
+    meta: { title: '商品管理', keepAlive: true, cacheName: 'GoodsManage' },
+  },
+  {
+    // 配置管理：可视化动态调整书本管理页面的字段类型与行为（配置页控制数据页）
+    path: '/config-manage',
+    name: 'configManage',
+    component: () => import('../views/config/ConfigEditor.vue'),
+    meta: { title: '配置管理', keepAlive: true, cacheName: 'ConfigEditor' },
   },
   // 兜底：任何未匹配的路由都展示 404 页面
   {

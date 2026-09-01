@@ -35,6 +35,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/role/RoleManage.vue'),
     meta: { title: '角色管理', prefetch: 'roles', keepAlive: true, cacheName: 'RoleManage' },
   },
+  {
+    // 配置页面：整页结构由一份 JS 配置渲染，数据存浏览器 localStorage（纯前端增删改查）
+    path: '/config',
+    name: 'config',
+    component: () => import('../views/config/ConfigPage.vue'),
+    meta: { title: '配置页面', keepAlive: true, cacheName: 'ConfigPage' },
+  },
   // 兜底：任何未匹配的路由都展示 404 页面
   {
     path: '/:pathMatch(.*)*',

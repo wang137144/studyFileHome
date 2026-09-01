@@ -14,6 +14,7 @@ import {
   Setting as SettingIcon,
   Fold,
   Expand,
+  Tickets,
 } from "@element-plus/icons-vue";
 import { useRbacStore } from "@/stores/rbac";
 import { useTabsStore, type TabItem } from "@/stores/tabs";
@@ -30,12 +31,13 @@ function toggleMenu() {
 }
 
 // 菜单 hover 时预热对应页面组件（预加载）：提前 import，切换时无需等待网络分包
-function prefetch(page: "user" | "role") {
-  const loader =
-    page === "user"
-      ? () => import("./views/user/UserList.vue")
-      : () => import("./views/role/RoleManage.vue");
-  loader().catch(() => {});
+function prefetch(page: "user" | "role" | "config") {
+  const loaders = {
+    user: () => import("./views/user/UserList.vue"),
+    role: () => import("./views/role/RoleManage.vue"),
+    config: () => import("./views/config/ConfigPage.vue"),
+  } as const;
+  loaders[page]().catch(() => {});
 }
 
 // 应用启动即预请求角色列表：分配角色弹窗打开时可直接使用，无需等待
@@ -45,6 +47,7 @@ rbac.fetchRoles();
 function tabIcon(path: string) {
   if (path === "/user") return User;
   if (path === "/role") return Setting;
+  if (path === "/config") return Tickets;
   if (path === "/") return HomeFilled;
   return Document;
 }
@@ -154,6 +157,10 @@ function runCtx(action: "current" | "others" | "left" | "right" | "all") {
         <el-menu-item index="/role" @mouseenter="prefetch('role')">
           <el-icon><Setting /></el-icon>
           <span>角色管理</span>
+        </el-menu-item>
+        <el-menu-item index="/config" @mouseenter="prefetch('config')">
+          <el-icon><Tickets /></el-icon>
+          <span>配置页面</span>
         </el-menu-item>
       </el-menu>
     </aside>

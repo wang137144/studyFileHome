@@ -1,0 +1,20 @@
+# EditorConfig：统一团队编辑器的基础格式约定
+# VSCode 原生支持（无需额外扩展）；其他编辑器可装 EditorConfig 插件
+# 作用：避免个别文件被写成 CRLF，导致 Volar 解析 SFC 时 <style> 块着色失效
+
+root = true
+
+[*]
+charset = utf-8
+# 换行符统一为 LF（与项目现有文件一致）
+end_of_line = lf
+# 文件末尾保留一个换行
+insert_final_newline = true
+# 去除行尾多余空格
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown 保留行尾双空格（用于换行排版）
+[*.md]
+trim_trailing_whitespace = false

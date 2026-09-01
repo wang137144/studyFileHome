@@ -1,6 +1,6 @@
 # Vue 3 + TypeScript + Vite + Pinia
 
-这是一个基于 **Vue 3**、**TypeScript**、**Vite** 和 **Pinia** 的现代化前端项目模板，集成了 Tailwind CSS v4 和状态持久化功能。
+这是一个基于 **Vue 3**、**TypeScript**、**Vite** 和 **Pinia** 的现代化前端项目模板，集成了状态持久化功能。
 
 ## 📋 技术栈
 
@@ -14,7 +14,6 @@
 - **pinia-plugin-persistedstate** (^4.7.1) - Pinia 状态持久化插件（支持 localStorage/sessionStorage）
 
 ### 样式方案
-- **Tailwind CSS v4** (^4.3.3) - 实用优先的 CSS 框架（基于 CSS 配置的新版本）
 - **PostCSS** (^8.5.26) - CSS 转换工具
 - **Autoprefixer** (^10.5.4) - 自动添加浏览器前缀
 
@@ -72,11 +71,10 @@ npm run preview
 │   │   └── user.ts          # 用户状态 store
 │   ├── App.vue              # 根组件
 │   ├── main.ts              # 应用入口文件
-│   └── style.css            # 全局样式（Tailwind CSS）
+│   └── style.css            # 全局样式
 ├── public/                  # 公共静态资源
 ├── index.html               # HTML 入口文件
 ├── vite.config.ts           # Vite 配置文件
-├── tailwind.config.js       # Tailwind CSS 配置（v4 为空配置）
 ├── postcss.config.js        # PostCSS 配置
 ├── tsconfig.json            # TypeScript 主配置
 ├── tsconfig.app.json        # 应用代码 TS 配置
@@ -100,12 +98,6 @@ npm run preview
 - ✅ **严格模式**: 启用所有严格类型检查
 - ✅ **路径映射**: 支持 `@/*` 导入路径
 - ✅ **项目引用**: 分离应用代码和 Node.js 工具的类型配置
-
-### Tailwind CSS v4 特性
-- ✅ **基于 CSS 配置**: 使用 `@import "tailwindcss"` 导入
-- ✅ **自动内容检测**: 自动扫描项目中的类名使用情况
-- ✅ **主题定制**: 通过 CSS 变量在 `style.css` 中自定义主题
-- ✅ **暗色模式**: 内置响应式暗色模式支持（通过 `prefers-color-scheme`）
 
 ### 环境变量
 | 文件 | 说明 |
@@ -146,11 +138,11 @@ export const useUserStore = defineStore('user', {
 ### 应用入口 ([main.ts](src/main.ts))
 - 创建 Vue 应用实例
 - 初始化 Pinia 并注册持久化插件
-- 挂载全局样式（Tailwind CSS）
+- 挂载全局样式
 
 ## 🎨 样式系统
 
-项目使用 **Tailwind CSS v4** 进行样式开发：
+项目使用全局 CSS 变量与 `<style scoped>` 进行样式开发：
 
 ### 全局样式变量 ([style.css](src/style.css))
 - 自定义颜色变量（文本、背景、边框、强调色等）
@@ -160,10 +152,9 @@ export const useUserStore = defineStore('user', {
 - 平滑滚动和抗锯齿优化
 
 ### 支持的样式写法
-1. **Tailwind 实用类**: `<div class="flex items-center justify-center">`
-2. **CSS 变量**: `color: var(--text);`
-3. **预处理器**: 支持 Less/Sass/Stylus 语法
-4. **作用域样式**: Vue SFC `<style scoped>`
+1. **CSS 变量**: `color: var(--text);`
+2. **预处理器**: 支持 Less/Sass/Stylus 语法
+3. **作用域样式**: Vue SFC `<style scoped>`
 
 ## 🛠️ 开发建议
 
@@ -187,7 +178,6 @@ export const useUserStore = defineStore('user', {
 - [Vue 3 官方文档](https://vuejs.org/)
 - [Pinia 官方文档](https://pinia.vuejs.org/)
 - [Vite 官方文档](https://vite.dev/)
-- [Tailwind CSS v4 文档](https://tailwindcss.com/)
 - [TypeScript 手册](https://www.typescriptlang.org/docs/)
 - [VueUse 工具库](https://vueuse.org/)
 

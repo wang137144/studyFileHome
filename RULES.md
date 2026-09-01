@@ -1,6 +1,6 @@
 # 用户规则（User Rules）
 
-> 本项目（Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS v4）的工程开发规范，面向开发者的可执行规则。所有规则均为强制项（MUST）或建议项（SHOULD），提交代码前请逐条自查。
+> 本项目（Vue 3 + TypeScript + Vite + Pinia）的工程开发规范，面向开发者的可执行规则。所有规则均为强制项（MUST）或建议项（SHOULD），提交代码前请逐条自查。
 
 ## 1. 语言与框架规范
 
@@ -22,7 +22,7 @@
 
 - **MUST** 组件遵循单一职责，一个组件只做一件事；复用逻辑抽离为 `composables`（`src/composables/`）。
 - **MUST** 组件对外接口使用 `defineProps` / `defineEmits` 显式声明，并使用 TS 类型（`withDefaults` 提供默认值）。
-- **MUST** 样式优先使用 Tailwind 实用类；自定义样式使用 `<style scoped>`，禁止全局污染。
+- **MUST** 自定义样式使用 `<style scoped>` 或全局 CSS 变量，禁止全局污染。
 - **SHOULD** 交互状态（加载中、空数据、错误）必须提供反馈 UI，不允许无响应空白。
 - **MUST** 使用 `v-for` 时必须提供稳定且唯一的 `:key`，禁止使用 `index` 作为 key（列表可变时）。
 
@@ -38,7 +38,7 @@
 
 - **MUST** 颜色、字体、间距等设计令牌统一取自全局 CSS 变量（见 `DESIGN_RULES.md`），禁止硬编码色值。
 - **MUST** 新功能必须同时适配亮色/暗色模式（项目基于 `prefers-color-scheme`），禁止仅亮色可用。
-- **SHOULD** 优先使用 Tailwind 响应式前缀（`md:` 等）适配 1024px 断点，与现有 `@media (max-width: 1024px)` 规则保持一致。
+- **SHOULD** 使用 `@media (max-width: 1024px)` 适配 1024px 断点，与现有规则保持一致。
 - **MUST** 可交互元素（按钮、链接）提供 `:hover` / `:focus-visible` 视觉反馈，保持 `transition` 时长统一（0.3s）。
 
 ## 6. Git 提交规范

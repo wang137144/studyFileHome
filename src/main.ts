@@ -8,7 +8,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 // 引入 Element Plus 组件库及它的全套全局样式
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-// 引入项目全局样式（Tailwind CSS）
+// 引入项目全局基础样式
 import './style.css'
 // 引入前端路由配置
 import router from './router'
